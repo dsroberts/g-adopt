@@ -111,6 +111,7 @@ jobs:
         id: run_pytest
         run: |
           . .venv/bin/activate
+          gmsh -2 tests/base_gmsh/square.geo
           seq 8 | xargs -P 8 -I{} -- bash -c "python -m pytest -v --splits 8 --group {} -m 'not longtest' --junit-xml=test_results{}.xml > job{}.log 2>&1"
           ### python -m pytest -m 'not longtest' --junit-xml=test_results.xml
         shell: bash
