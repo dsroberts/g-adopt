@@ -55,9 +55,6 @@ jobs:
             ln -s /usr/share/doc/libprrte-dev /usr/lib/x86_64-linux-gnu/prrte3/share/prte
         shell: bash
 
-      - name: Install uv
-        uses: astral-sh/setup-uv@v7
-
       - uses: actions/checkout@v5
         with:
           lfs: true
@@ -65,6 +62,9 @@ jobs:
       - name: Fetch LFS artifacts
         run: |
           git lfs checkout
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
 
       - name: Install Python dependencies
         run: |
@@ -77,12 +77,12 @@ jobs:
           . .venv/bin/activate
           gmsh -2 tests/base_gmsh/square.geo
           curl -fsSLO https://data.gadopt.org/github-actions/test_durations.json
-          seq ${TEST_STREAMS} | xargs -P ${TEST_STREAMS} -I{} -- bash -c "python -m pytest -v --splits ${TEST_STREAMS} --group {} -m 'not longtest' --junit-xml=test_results{}.xml --splitting-algorithm least_duration --durations=50 --durations-path=./test_durations.json > job{}.log 2>&1"
+          seq ${TEST_STREAMS} | xargs -P ${TEST_STREAMS} -I{} -- bash -c "python -m pytest -v --splits ${TEST_STREAMS} --group {} -m 'not longtest' --junit-xml=test_results{}.xml --splitting-algorithm least_duration --durations-path=./test_durations.json > job{}.log 2>&1"
         shell: bash
 
       - name: Display pytest output
         if: ${{ !cancelled() && steps.run_pytest.conclusion != 'skipped' }}
-        run: for (( i=1; i<=8; i++ )); do cat "job${i}.log"; done
+        run: for (( i=1; i<=${TEST_STREAMS}; i++ )); do [[ -f "job${i}.log" ]] && cat "job${i}.log"; done
         shell: bash
 
       - name: Pytest report
@@ -93,13 +93,6 @@ jobs:
           report_paths: test_results*.xml
           include_passed: true
           annotate_only: true
-      
-      - name: Upload durations
-        if: ${{ !cancelled() && steps.run_pytest.conclusion != 'skipped' }}
-        uses: actions/upload-artifact@v6
-        with:
-          name: test-durations
-          path: tests/test_durations*.json
 
       - name: Upload run log
         if: ${{ !cancelled() }}
