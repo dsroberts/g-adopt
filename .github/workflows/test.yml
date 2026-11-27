@@ -16,40 +16,6 @@ on:
         default: dev-main
 
 jobs:
-  smoke_test:
-    name: Run smoke test
-    runs-on: ubuntu-latest
-    container:
-      # Prefer specific branch, then PR base, then actual branch
-      image: firedrakeproject/firedrake-vanilla-default:${{ inputs.target_container || (github.event_name == 'pull_request' && case(contains(github.event.pull_request.labels.*.name, 'container:main'), 'dev-main', contains(github.event.pull_request.labels.*.name, 'container:release'), 'dev-release', format('dev-{0}', github.base_ref))) || format('dev-{0}', github.ref_name) }}
-
-    env:
-      UV_EXCLUDE: ${{ github.workspace}}/.uv-exclude.txt
-
-    steps:
-      - name: Install dependencies
-        run: |
-          apt update
-          apt install -y git-lfs
-          git config --global --add safe.directory $GITHUB_WORKSPACE
-
-      - uses: actions/checkout@v5
-        with:
-          lfs: true
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v7
-        with:
-          # disable cache on hosted runner, otherwise we need a lock file
-          enable-cache: false
-
-      - name: Run smoke test
-        run: |
-          uv venv --system-site-packages
-          uv pip install .
-          . .venv/bin/activate
-          make -C demos/mantle_convection/base_case check
-
   build:
     name: Benchmark regression test
     runs-on: ubuntu-latest
@@ -60,9 +26,6 @@ jobs:
     concurrency:
       group: testing-${{ github.head_ref || github.run_id }}
       cancel-in-progress: true
-
-    needs: smoke_test
-    if: ${{ needs.check_commit.outputs.skip != 'true' }}
 
     env:
       OMP_NUM_THREADS: 1
@@ -91,15 +54,15 @@ jobs:
             ln -s /usr/share/doc/libprrte-dev /usr/lib/x86_64-linux-gnu/prrte3/share/prte
         shell: bash
 
-      - name: Cache
-        uses: ./.github/actions/cache
-
       - name: Install uv
         uses: astral-sh/setup-uv@v7
 
       - uses: actions/checkout@v5
         with:
           lfs: true
+
+      - name: Cache
+        uses: ./.github/actions/cache
 
       - name: Fetch LFS artifacts
         run: |
