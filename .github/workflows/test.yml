@@ -61,17 +61,15 @@ jobs:
         with:
           lfs: true
 
-      - name: Cache
-        uses: ./.github/actions/cache
-
       - name: Fetch LFS artifacts
         run: |
           git lfs checkout
 
       - name: Install Python dependencies
-        run: |
-          uv venv --system-site-packages
-          uv pip install .[demos]
+        uses: ./.github/actions/install-py-deps
+        #run: |
+        #  uv venv --system-site-packages
+        #  uv pip install .[demos]
 
       - name: Pytest
         id: run_pytest
@@ -110,17 +108,17 @@ jobs:
           name: run-log
           path: /tmp/tsp_db.sqlite3
 
-      - name: Cleanup temporary files
-        if: always()
-        shell: bash
-        run: |
-          uv cache prune --ci
-          . .venv/bin/activate
-          # see https://github.com/inducer/pytools/blob/main/pytools/persistent_dict.py#L484
-          export PYTOOLS_CACHE_DIR=$( python -c 'import platformdirs; print(platformdirs.user_cache_dir("pytools","pytools"))')
-          if [[ "${PYTOOLS_CACHE_DIR}" ]]; then
-            echo Cleaning pytools persistent dicts from "${PYTOOLS_CACHE_DIR}"
-            rm -rf --preserve-root=all "${PYTOOLS_CACHE_DIR}"
-          else
-            echo PYTOOLS_CACHE_DIR could not be determined
-          fi
+      ## - name: Cleanup temporary files
+      ##   if: always()
+      ##   shell: bash
+      ##   run: |
+      ##     uv cache prune --ci
+      ##     . .venv/bin/activate
+      ##     # see https://github.com/inducer/pytools/blob/main/pytools/persistent_dict.py#L484
+      ##     export PYTOOLS_CACHE_DIR=$( python -c 'import platformdirs; print(platformdirs.user_cache_dir("pytools","pytools"))')
+      ##     if [[ "${PYTOOLS_CACHE_DIR}" ]]; then
+      ##       echo Cleaning pytools persistent dicts from "${PYTOOLS_CACHE_DIR}"
+      ##       rm -rf --preserve-root=all "${PYTOOLS_CACHE_DIR}"
+      ##     else
+      ##       echo PYTOOLS_CACHE_DIR could not be determined
+      ##     fi
