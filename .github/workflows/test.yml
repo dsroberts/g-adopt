@@ -105,17 +105,19 @@ jobs:
       - name: Install Python dependencies
         run: |
           uv venv --system-site-packages
-          uv pip install .[demos,optimisation]
+          uv pip install .[demos]
 
       - name: Pytest
         id: run_pytest
         run: |
           . .venv/bin/activate
-          seq 8 | xargs -P 8 -n 1 -I{} -- bash -c "python -m pytest --splits 8 --group {} -m 'not longtest' --junit-xml=test_results{}.xml > job{}.log 2>&1"
-          for (( i=1; i<=8; i++ )); do
-            cat "job${i}.log"
-          done
+          seq 8 | xargs -P 8 -I{} -- bash -c "python -m pytest -v --splits 8 --group {} -m 'not longtest' --junit-xml=test_results{}.xml > job{}.log 2>&1"
           ### python -m pytest -m 'not longtest' --junit-xml=test_results.xml
+        shell: bash
+
+      - name: Display pytest output
+        if: ${{ !cancelled() && steps.run_pytest.conclusion != 'skipped' }}
+        run: for (( i=1; i<=8; i++ )); do cat "job${i}.log"; done
         shell: bash
 
       - name: Pytest report
