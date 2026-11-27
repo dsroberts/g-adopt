@@ -3,7 +3,7 @@ from dataclasses import dataclass
 
 import firedrake as fd
 import numpy as np
-import pygplates
+# import pygplates
 from firedrake.ufl_expr import extract_unique_domain
 from pyadjoint.tape import annotate_tape, stop_annotating
 from scipy.spatial import cKDTree
