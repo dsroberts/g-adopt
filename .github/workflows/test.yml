@@ -102,6 +102,11 @@ jobs:
         run: |
           git lfs checkout
 
+      - name: Install Python dependencies
+        run: |
+          uv venv --system-site-packages
+          uv pip install .[demos,optimisation,gplates]
+
       - name: Pytest
         id: run_pytest
         run: |
