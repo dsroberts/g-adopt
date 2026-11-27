@@ -91,6 +91,9 @@ jobs:
             ln -s /usr/share/doc/libprrte-dev /usr/lib/x86_64-linux-gnu/prrte3/share/prte
         shell: bash
 
+      - name: Cache
+        uses: ./.github/actions/cache
+
       - name: Install uv
         uses: astral-sh/setup-uv@v7
 

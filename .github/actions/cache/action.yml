@@ -1,0 +1,12 @@
+name: Cache
+
+description: "Dummy action to perform cache."
+
+runs:
+  using: "composite"
+  steps:
+    - name: Cache
+      uses: ./.github/actions/with-post-steps
+      with:
+        main: echo "Restoring cache..."
+        post: echo "Rebuilding cache..."
