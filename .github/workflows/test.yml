@@ -77,7 +77,7 @@ jobs:
           . .venv/bin/activate
           gmsh -2 tests/base_gmsh/square.geo
           curl -fsSLO https://data.gadopt.org/github-actions/test_durations.json
-          seq ${TEST_STREAMS} | xargs -P ${TEST_STREAMS} -I{} -- bash -c "python -m pytest -v --splits ${TEST_STREAMS} --group {} -m 'not longtest' --junit-xml=test_results{}.xml --splitting-algorithm least_duration --durations=50 --durations-./test_durations.json > job{}.log 2>&1"
+          seq ${TEST_STREAMS} | xargs -P ${TEST_STREAMS} -I{} -- bash -c "python -m pytest -v --splits ${TEST_STREAMS} --group {} -m 'not longtest' --junit-xml=test_results{}.xml --splitting-algorithm least_duration --durations=50 --durations-path=./test_durations.json > job{}.log 2>&1"
         shell: bash
 
       - name: Display pytest output
