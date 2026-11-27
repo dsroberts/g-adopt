@@ -16,30 +16,6 @@ on:
         default: dev-main
 
 jobs:
-  check_commit:
-    runs-on: ubuntu-latest
-    outputs:
-      skip: ${{ steps.check_commit.outputs.skip }}
-    steps:
-      - name: Always run tests on workflow dispatch
-        id: early_exit
-        if: ${{ github.event_name == 'workflow_dispatch' }}
-        run:
-          echo skip=true >> "$GITHUB_OUTPUT"
-      - uses: actions/checkout@v5
-        if: ${{ steps.early_exit.outputs.skip != 'true' }}
-        with:
-          ref: ${{ github.event.push.after || github.event.pull_request.head.sha || github.event.workflow_dispatch.ref }}
-      - name: Check if message contains skip keyword
-        id: check_commit
-        if: ${{ steps.early_exit.outputs.skip != 'true' }}
-        run: |
-          message=$(git log -1 --pretty=format:'%B')
-          regex="\[skip tests\]"
-          if [[ "$message" =~ $regex ]]; then
-            echo skip=true >> "$GITHUB_OUTPUT"
-          fi
-
   smoke_test:
     name: Run smoke test
     runs-on: ubuntu-latest
@@ -49,9 +25,6 @@ jobs:
 
     env:
       UV_EXCLUDE: ${{ github.workspace}}/.uv-exclude.txt
-
-    needs: check_commit
-    if: ${{ needs.check_commit.outputs.skip != 'true' }}
 
     steps:
       - name: Install dependencies
