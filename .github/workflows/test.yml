@@ -29,6 +29,7 @@ jobs:
 
     env:
       OMP_NUM_THREADS: 1
+      TEST_STREAMS: 8
       UV_EXCLUDE: ${{ github.workspace}}/.uv-exclude.txt
 
     steps:
@@ -66,18 +67,17 @@ jobs:
           git lfs checkout
 
       - name: Install Python dependencies
-        uses: ./.github/actions/install-py-deps
-        #run: |
-        #  uv venv --system-site-packages
-        #  uv pip install .[demos]
+        run: |
+          uv venv --system-site-packages
+          uv pip install .[demos]
 
       - name: Pytest
         id: run_pytest
         run: |
           . .venv/bin/activate
           gmsh -2 tests/base_gmsh/square.geo
-          ### seq 8 | xargs -P 8 -I{} -- bash -c "python -m pytest -v --splits 8 --group {} -m 'not longtest' --junit-xml=test_results{}.xml > job{}.log 2>&1"
-          python -m pytest -m 'not longtest' --junit-xml=test_results.xml --store-durations --durations-path=tests/test_durations.json
+          curl -fsSLO https://data.gadopt.org/github-actions/test_durations.json
+          seq ${TEST_STREAMS} | xargs -P ${TEST_STREAMS} -I{} -- bash -c "python -m pytest -v --splits ${TEST_STREAMS} --group {} -m 'not longtest' --junit-xml=test_results{}.xml --splitting-algorithm least_duration --durations=50 --durations-./test_durations.json > job{}.log 2>&1"
         shell: bash
 
       - name: Display pytest output
@@ -99,7 +99,7 @@ jobs:
         uses: actions/upload-artifact@v6
         with:
           name: test-durations
-          path: tests/test_durations.json
+          path: tests/test_durations*.json
 
       - name: Upload run log
         if: ${{ !cancelled() }}
@@ -108,17 +108,17 @@ jobs:
           name: run-log
           path: /tmp/tsp_db.sqlite3
 
-      ## - name: Cleanup temporary files
-      ##   if: always()
-      ##   shell: bash
-      ##   run: |
-      ##     uv cache prune --ci
-      ##     . .venv/bin/activate
-      ##     # see https://github.com/inducer/pytools/blob/main/pytools/persistent_dict.py#L484
-      ##     export PYTOOLS_CACHE_DIR=$( python -c 'import platformdirs; print(platformdirs.user_cache_dir("pytools","pytools"))')
-      ##     if [[ "${PYTOOLS_CACHE_DIR}" ]]; then
-      ##       echo Cleaning pytools persistent dicts from "${PYTOOLS_CACHE_DIR}"
-      ##       rm -rf --preserve-root=all "${PYTOOLS_CACHE_DIR}"
-      ##     else
-      ##       echo PYTOOLS_CACHE_DIR could not be determined
-      ##     fi
+      - name: Cleanup temporary files
+        if: always()
+        shell: bash
+        run: |
+          uv cache prune --ci
+          . .venv/bin/activate
+          # see https://github.com/inducer/pytools/blob/main/pytools/persistent_dict.py#L484
+          export PYTOOLS_CACHE_DIR=$( python -c 'import platformdirs; print(platformdirs.user_cache_dir("pytools","pytools"))')
+          if [[ "${PYTOOLS_CACHE_DIR}" ]]; then
+            echo Cleaning pytools persistent dicts from "${PYTOOLS_CACHE_DIR}"
+            rm -rf --preserve-root=all "${PYTOOLS_CACHE_DIR}"
+          else
+            echo PYTOOLS_CACHE_DIR could not be determined
+          fi
