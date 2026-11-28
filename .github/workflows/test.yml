@@ -76,7 +76,7 @@ jobs:
         run: |
           . .venv/bin/activate
           gmsh -2 tests/base_gmsh/square.geo
-          if curl -fsSL https://api.cloudflare.com/client/v4/accounts/${{ secrets.CLOUDFLARE_ACCOUNT_ID }}/storage/kv/namespaces/test/values/test_durations -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" > test_duration.json; then
+          if curl -fsSLO https://api.cloudflare.com/client/v4/accounts/${{ secrets.CLOUDFLARE_ACCOUNT_ID }}/storage/kv/namespaces/cfb5d098d3c94b1796c668366bd88b17/values/test_durations.json -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}"; then
             export SPLIT_ALG="--splitting-algorithm least_duration --durations-path=./test_durations.json"
           else
             echo "COULD NOT RETRIEVE DURATIONS FILE"
